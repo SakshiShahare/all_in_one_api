@@ -3,6 +3,23 @@ import ApiError from "../utils/ApiError.js"
 import {User} from "../models/user.model.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import ApiResponse from "../utils/ApiResponse.js"
+//method to generate the access and refresh tokens together 
+const generateAccessAndRefreshToken = async (userId) =>{
+    try {
+        const user = await User.findById(userId);
+        const accessToken = await user.genrateAccessToken();
+        const refreshToken = await user.generateRefreshToken();
+        //adding the refresh token to the document
+        user.refreshToken = refreshToken;
+        //the validation is false so that no need to check for the password again and again 
+        await user.save({validateBeforeSave : false});
+
+        return {accessToken , refreshToken};
+    } catch (error) {
+        throw new APiError(500 , "Something went wrong while generating tokens");
+    }
+
+}
 const registerUser = asyncHandler(async (req , res) => {
     
     //steps
@@ -41,7 +58,7 @@ const registerUser = asyncHandler(async (req , res) => {
 
     let coverLocalPath ;
     if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
-        coverLocalPath = req.files?.coverImage[0]?.path;
+        coverLocalPath = req.files?.coverImage[0]?.path
     }
 
     if(!avatarLocalPath){
@@ -74,4 +91,52 @@ const registerUser = asyncHandler(async (req , res) => {
 
 })
 
-export {registerUser};
+const loginUser = asyncHandler(async (req ,res )=>{
+    //steps
+    //get the data from the user
+    //validation if the data is correctly filled
+    //check the entered password
+    //if incorrect password return error
+    //if correct password
+    //find the user in the database
+    //generate accesstoken and refreshtoken
+    //cookies se khelenge
+    //refreshtoken save in database
+    //return user login successful if it is successful else return failure message
+
+    const {username ,email , password} = req.body;
+
+    if(!username && !email){
+        throw new ApiError(400 , "Username or email is required");
+    }
+
+    const registeredUser = await User.findOne({$or : [{username} , {email}]});
+
+    if(!registeredUser) throw new ApiError(404 , "User with such username or email is not found");
+
+    if(!password) throw new ApiError(404 , "Password is required");
+
+    const checkPassword = await registerUser.isPasswordCorrect(password);
+
+    if(!checkPassword) throw new ApiError(404 , "Incorrect password");
+
+    const {accessToken , refreshToken} = await generateAccessAndRefreshToken(registeredUser._id);
+
+    //getting the new user because we need refreshToken
+
+    const newUser = await User.findById(user._id).select("-password -refreshToken");
+    //options to make the cookie modifiable only from the backend 
+    const options =  { 
+        httpOnly : true,
+        secure : true
+    }
+    
+    res
+    .status(200)
+    .cookie("accessToken" , accessToken , options)
+    .cookie("refreshToken" , refreshToken , options)
+    .json(new ApiResponse(200 , "Login successful" , {accessToken , refreshToken , user: newUser}));
+
+});
+
+export {registerUser, loginUser};
