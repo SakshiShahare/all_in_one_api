@@ -37,7 +37,12 @@ const registerUser = asyncHandler(async (req , res) => {
     //multer gives us the req.files 
     console.log(req.files)
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverLocalPath = req.files?.coverImage[0]?.path ;
+    // const coverLocalPath = req.files?.coverImage[0]?.path ;
+
+    let coverLocalPath ;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverLocalPath = req.files?.coverImage[0]?.path;
+    }
 
     if(!avatarLocalPath){
         throw new ApiError(400 , "Avatar is required");
