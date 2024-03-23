@@ -23,11 +23,11 @@ const registerUser = asyncHandler(async (req , res) => {
 
     console.log("email :" , email)
 
-    if(!([fullname, email, usename, password].some((field) => { return field.trim === "" }))){
-        throw new APiError(400 , "All fields are required");
+    if(([fullname, email, username, password].some((field) => { return field.trim === "" }))){
+        throw new ApiError(400 , "All fields are required");
     }
     
-    res.status(201).json({ "message" : "ok"})
+    
     //with or operator the user with either the username or the email criteria to check if it exists
     const existedUser = await User.findOne({$or : [{username} , {email}]});
 
@@ -36,7 +36,7 @@ const registerUser = asyncHandler(async (req , res) => {
 
     //multer gives us the req.files 
     console.log(req.files)
-    const avatarLocalPath = req.files?.avatarImage[0]?.path;
+    const avatarLocalPath = req.files?.avatar[0]?.path;
     const coverLocalPath = req.files?.coverImage[0]?.path ;
 
     if(!avatarLocalPath){
