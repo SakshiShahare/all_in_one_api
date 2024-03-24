@@ -192,7 +192,7 @@ const refreshAccessToken = asyncHandler(async (req, res) =>{
 
     if(!(user.refreshToken === incomingRefreshToken)) throw new ApiError(404  , "User with refreshToken not found");
     
-    const {accessToken , refreshToken} = await user.generateAccessAndRefreshToken();
+    const {accessToken , refreshToken} = await generateAccessAndRefreshToken(user._id);
 
     const options = {
         httpOnly : true, 
@@ -205,7 +205,7 @@ const refreshAccessToken = asyncHandler(async (req, res) =>{
     .cookie("refreshToken" , refreshToken , options)
     .json(new ApiResponse(200 , "Refresh Done"  , {accessToken , refreshToken}))
     } catch (error) {
-        throw new ApiError(500 , "Internal Function error")
+        throw new ApiError(500 , error)
     }
 
 

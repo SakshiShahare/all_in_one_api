@@ -22,6 +22,8 @@ router.route('/register').post(
 router.route('/login').post(loginUser);
 
 //secured route
+
+
 router.route('/logout').post(verifyToken , logoutUser);
 //not need to use middleware all the logic is decoded in the function only
 router.route('/refresh-token').post(refreshAccessToken);
