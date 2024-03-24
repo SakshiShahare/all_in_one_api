@@ -3,7 +3,7 @@ import ApiError from "../utils/ApiError.js"
 import {User} from "../models/user.model.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import ApiResponse from "../utils/ApiResponse.js"
-import jwt, { decode } from "jsonwebtoken"
+import jwt from "jsonwebtoken"
 //method to generate the access and refresh tokens together 
 const generateAccessAndRefreshToken = async (userId) =>{
     try {
@@ -211,4 +211,51 @@ const refreshAccessToken = asyncHandler(async (req, res) =>{
 
 }) 
 
-export {registerUser, loginUser , logoutUser , refreshAccessToken};
+const changeCurrentPassword = asyncHandler(async(req, res) =>{
+    //steps
+    //take the old and new password from the user
+    //get the user from database
+    //check if old and database password match 
+    //if not throw error
+    //if match
+    //take new password 
+    //save the user this will hash the new password 
+
+
+    const {oldPassword , newPassword} = req.body;
+
+    if(!oldPassword || !newPassword) throw new ApiError(400 , "Please provide the required fields")
+
+    const user = await User.findById(req.user._id);
+
+    const isPasswordValid = user.isPasswordCorrect(oldPassword);
+
+    if(!isPasswordValid) throw new ApiError(400 , "Old password is not correct");
+
+    //the password is correct
+    user.password = newPassword;
+
+    await  user.save({validateBeforeSave : false});
+
+    res.status(200).json(new ApiResponse(200 , "Password Updated"));
+
+
+    
+})
+
+const getCurrentUser = asyncHandler(async(req, res)=>{
+
+    res.status(200).json(new ApiResponse(200 , "User fetched successfully" , req.user));
+})
+
+const updateAccountDetails = asyncHandler(async(req, res)=>{
+
+    const {fullname , email} = req.body;
+    
+    const user = await User.findByIdAndUpdate(req.user._id , {$set : {fullname , email}} , {new : true}).select("-password -refreshToken");
+
+    res.status(200).json(new ApiResponse(200 , "Updated Successfully" , user));
+
+})
+
+export {registerUser, loginUser , logoutUser , refreshAccessToken , changeCurrentPassword, getCurrentUser ,updateAccountDetails};
