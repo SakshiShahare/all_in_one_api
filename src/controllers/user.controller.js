@@ -7,7 +7,7 @@ import ApiResponse from "../utils/ApiResponse.js"
 const generateAccessAndRefreshToken = async (userId) =>{
     try {
         const user = await User.findById(userId);
-        const accessToken = await user.genrateAccessToken();
+        const accessToken = await user.generateAccessToken();
         const refreshToken = await user.generateRefreshToken();
         //adding the refresh token to the document
         user.refreshToken = refreshToken;
@@ -16,7 +16,7 @@ const generateAccessAndRefreshToken = async (userId) =>{
 
         return {accessToken , refreshToken};
     } catch (error) {
-        throw new APiError(500 , "Something went wrong while generating tokens");
+        throw new ApiError(500 , "Something went wrong while generating tokens");
     }
 
 }
@@ -105,7 +105,7 @@ const loginUser = asyncHandler(async (req ,res )=>{
     //return user login successful if it is successful else return failure message
 
     const {username ,email , password} = req.body;
-
+    console.log(username, email, password);
     if(!username && !email){
         throw new ApiError(400 , "Username or email is required");
     }
@@ -116,7 +116,7 @@ const loginUser = asyncHandler(async (req ,res )=>{
 
     if(!password) throw new ApiError(404 , "Password is required");
 
-    const checkPassword = await registerUser.isPasswordCorrect(password);
+    const checkPassword = await registeredUser.isPasswordCorrect(password);
 
     if(!checkPassword) throw new ApiError(404 , "Incorrect password");
 
@@ -124,7 +124,7 @@ const loginUser = asyncHandler(async (req ,res )=>{
 
     //getting the new user because we need refreshToken
 
-    const newUser = await User.findById(user._id).select("-password -refreshToken");
+    const newUser = await User.findById(registeredUser._id).select("-password -refreshToken");
     //options to make the cookie modifiable only from the backend 
     const options =  { 
         httpOnly : true,
