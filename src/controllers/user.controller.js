@@ -258,4 +258,48 @@ const updateAccountDetails = asyncHandler(async(req, res)=>{
 
 })
 
-export {registerUser, loginUser , logoutUser , refreshAccessToken , changeCurrentPassword, getCurrentUser ,updateAccountDetails};
+
+const updateUserAvatar  = asyncHandler(async(req, res)=>{
+    //steps
+    //get the file localpath
+    //validation
+    //upload the file on cloudinary
+    //get the url 
+    //change the url in the database
+    //send the response
+
+    const avatarLocalPath = req.file?.path;
+
+    if(!avatarLocalPath) throw new ApiError(404, "Please upload the file for avatar");
+
+    const response = await uploadOnCloudinary(avatarLocalPath);
+
+    if(!response) throw new ApiError(400 , "No file to upload");
+    //get the url of the cloudinary
+    const newAvatar = response.url;
+
+    const user = await User.findByIdAndUpdate(req.user._id , {$set : {avatar : newAvatar}} , {new : true});
+
+    res.status(200).json(new ApiResponse(200 , "Avatar changed" , user));
+})
+
+const updateUserCoverImage = asyncHandler(async(req, res)=>{
+    const coverImageLocalPath = req.file?.path;
+
+    if(!coverImageLocalPath) throw new ApiError(404, "Please upload the file for cover Image");
+
+    const response = await uploadOnCloudinary(coverImageLocalPath);
+
+    if(!response) throw new ApiError(400 , "No file to upload");
+    //get the url of the cloudinary
+    const newCoverImage = response.url;
+
+    const user = await User.findByIdAndUpdate(req.user._id , {$set : {coverImage : newCoverImage}} , {new : true});
+
+    res.status(200).json(new ApiResponse(200 , "CoverImage  changed" , user));
+})
+
+export {registerUser, loginUser , logoutUser , 
+    refreshAccessToken , changeCurrentPassword, getCurrentUser ,
+    updateAccountDetails , updateUserAvatar , 
+    updateUserCoverImage};
