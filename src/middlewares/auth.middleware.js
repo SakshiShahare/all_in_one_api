@@ -21,7 +21,7 @@ const verifyToken = asyncHandler(async (req , res , next) =>{
 
     next();
     } catch (error) {
-        throw new ApiError(401 , "unauthorized access");
+        throw new ApiError(401 , "Invalid credentials");
     }
 })
 
