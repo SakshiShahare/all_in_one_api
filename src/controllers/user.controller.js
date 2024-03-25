@@ -4,6 +4,7 @@ import {User} from "../models/user.model.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import ApiResponse from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose"
 //method to generate the access and refresh tokens together 
 const generateAccessAndRefreshToken = async (userId) =>{
     try {
@@ -223,6 +224,7 @@ const changeCurrentPassword = asyncHandler(async(req, res) =>{
 
 
     const {oldPassword , newPassword} = req.body;
+    console.log(oldPassword , newPassword)
 
     if(!oldPassword || !newPassword) throw new ApiError(400 , "Please provide the required fields")
 
@@ -420,9 +422,6 @@ const getWatchHistory = asyncHandler(async (req, res)=>{
             
                 ]
             }
-        },
-        {
-
         }
     ])    
 
