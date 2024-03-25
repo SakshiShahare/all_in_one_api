@@ -1,4 +1,5 @@
 import mongoose , {Schema} from "mongoose"
+//whenever a channel is subscribed a new document is formed
 
 const subscriptionSchema = new Schema(
     {

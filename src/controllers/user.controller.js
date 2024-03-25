@@ -299,7 +299,138 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
     res.status(200).json(new ApiResponse(200 , "CoverImage  changed" , user));
 })
 
+const getUserChannelProfile = asyncHandler(async(req ,res)=>{
+    //  we mostly visit the channel page and then get the channela profile 
+    //get the user name
+    //validation of the user name
+    // if not present return error
+    // if present get the details like username full email 
+    const {username}  = req.params;
+
+    if(!username?.trim()) throw new ApiError(404, "Please provide channel name");
+    //aggregate returns the array of documents 
+    const  channel  = await User.aggregate([
+        {
+            $match : {username , username}} ,
+        {$lookup : 
+            {
+                from : "subscriptions",
+                localField : "_id",
+                foreignField : "channel",
+                as : "subscribers"
+
+            }
+        } , 
+        {
+          $lookup : 
+          {
+            from : "subscriptions",
+            localField : "_id",
+            foreignField :"subscriber",
+            as : "subscribedTo"
+          }  
+
+        }, 
+        {
+            $addFields : {
+                subscibersCount : {
+                    $size  : "$subscribers"
+                },
+                subscribedToCount : {
+                    $size : "$subscribedTo"
+                },
+                //if we subscribed the channel 
+                isSubscribed : {
+                    $cond : {
+                        if : {$in : [req.user?._id , "$subscribers.subscriber"]},
+                        then : true,
+                        else : false
+                    } 
+                }
+            }
+        },
+        {
+            //projects the neccessary fields only and not all the fields 
+            $project : {
+                fullname : 1,
+                username : 1,
+                subscibersCount : 1,
+                subscribedToCount : 1,
+                isSubscribed : 1,
+                avatar : 1,
+                coverImage : 1,
+                email : 1
+            }
+        }
+
+    ]);
+
+    if(!channel?.length) throw new ApiError(404,  'No such channel found');
+
+
+    console.log(channel);
+
+
+    res.status(200).json(new ApiResponse(200 , "User channel fetched successfully",channel[0]));
+
+
+})
+
+const getWatchHistory = asyncHandler(async (req, res)=>{
+    //inside the req.user._id we get a string internally mongoose convert it into object id format to 
+    //get the proper object id format
+    //very important question for interviews
+    const user = await User.aggregate([
+        //getting the user with the id
+        {$match : {_id : new mongoose.Types.ObjectId(req.user._id)}},
+        //now we have the user and need to get the watch history from the videos
+        {
+            $lookup : {
+                from : "videos",
+                localField : "watchHistory",
+                foreignField : "_id",
+                as : "watchHistory",
+                //now we have array of all the videos we have watched
+                pipeline : [
+                    {
+                        //getting the owner details 
+                        $lookup : {
+                            from : "users",
+                            localField : "owner",
+                            foreignField : "_id",
+                            as : "owner",
+                            pipeline  : [
+                                {
+                                    $project : {
+                                        username : 1,
+                                        avatar : 1,
+                                        fullname : 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields : {
+                            owner : {
+                                $first : "$owner"
+                            }
+                        }
+                    }
+            
+                ]
+            }
+        },
+        {
+
+        }
+    ])    
+
+    res.status(200).json(new ApiResponse(200 , "watch history fetched successfully" , user[0].watchHistory));
+
+})
 export {registerUser, loginUser , logoutUser , 
     refreshAccessToken , changeCurrentPassword, getCurrentUser ,
     updateAccountDetails , updateUserAvatar , 
-    updateUserCoverImage};
+    updateUserCoverImage , getUserChannelProfile,
+    getWatchHistory};
